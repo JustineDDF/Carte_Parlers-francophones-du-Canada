@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Carte des parlers francophones du Canada</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    #map { height: 100vh; }
+    .cyan-text { color: #00EBD2; font-weight: bold; }
+    .black-text { color: black; }
+    .word-list { margin: 5px 0; padding-left: 15px; }
+    .popup-btn {
+      background: none;
+      border: none;
+      color: #00EBD2;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+    .popup-btn:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    var map = L.map('map').setView([56.1304, -106.3468], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Données des régions avec coordonnées et mots
+    var regions = [
+      { name: "Québec", coords: [46.8, -71.2], mots: ["char", "maganer", "pitoune"] },
+      { name: "Acadie", coords: [46.5, -64.8], mots: ["chiac", "brunante"] },
+      { name: "Ontario", coords: [45.4, -75.7], mots: ["checker", "sloche"] },
+      { name: "Ouest canadien", coords: [49.9, -97.1], mots: ["lièvre jack"] },
+      { name: "Territoires du Nord", coords: [62.4, -114.4], mots: ["mots autochtones"] }
+    ];
+
+    // Style des carrés cyan visibles
+    var squareIcon = L.divIcon({
+      className: "",
+      html: '<div style="width:40px; height:40px; background:#00EBD2; border:2px solid #00EBD2;"></div>',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+    });
+
+    // Fonction pour créer la popup dynamique
+    function createPopupContent(region, marker) {
+      let html = `<div class="cyan-text">${region.name}</div><ul class="word-list">`;
+      region.mots.forEach((mot, idx) => {
+        html += `<li class="black-text">${mot} <button class="popup-btn" onclick="editWord(${regions.indexOf(region)}, ${idx}, this)">Modifier</button> <button class="popup-btn" onclick="deleteWord(${regions.indexOf(region)}, ${idx}, this)">Supprimer</button></li>`;
+      });
+      html += `</ul><button class="popup-btn" onclick="addWord(${regions.indexOf(region)}, this)">Ajouter un mot</button>`;
+      return html;
+    }
+
+    // Créer les marqueurs pour chaque région
+    regions.forEach(region => {
+      var marker = L.marker(region.coords, {icon: squareIcon}).addTo(map);
+      marker.bindPopup(createPopupContent(region, marker));
+      region.marker = marker;
+    });
+
+    // Fonctions interractives
+    function addWord(regionIdx, btn) {
+      let mot = prompt("Entrez un nouveau mot :");
+      if (mot) {
+        regions[regionIdx].mots.push(mot);
+        regions[regionIdx].marker.setPopupContent(createPopupContent(regions[regionIdx], regions[regionIdx].marker));
+        regions[regionIdx].marker.openPopup();
+      }
+    }
+
+    function editWord(regionIdx, motIdx, btn) {
+      let nouveau = prompt("Modifier le mot :", regions[regionIdx].mots[motIdx]);
+      if (nouveau) {
+        regions[regionIdx].mots[motIdx] = nouveau;
+        regions[regionIdx].marker.setPopupContent(createPopupContent(regions[regionIdx], regions[regionIdx].marker));
+        regions[regionIdx].marker.openPopup();
+      }
+    }
+
+    function deleteWord(regionIdx, motIdx, btn) {
+      if (confirm("Supprimer ce mot ?")) {
+        regions[regionIdx].mots.splice(motIdx, 1);
+        regions[regionIdx].marker.setPopupContent(createPopupContent(regions[regionIdx], regions[regionIdx].marker));
+        regions[regionIdx].marker.openPopup();
+      }
+    }
+  </script>
+</body>
+</html>
